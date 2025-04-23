@@ -1,0 +1,21 @@
+# Python
+__pycache__/
+*.py[cod]
+*.sqlite3
+*.log
+
+# Env
+.env
+*.env
+
+
+# Docker
+Dockerfile
+
+# System
+.DS_Store
+*.swp
+.vscode/
+
+# Media/uploads
+media/uploads/

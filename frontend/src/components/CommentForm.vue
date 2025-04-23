@@ -14,8 +14,9 @@
     <textarea ref="textArea" v-model="form.text" placeholder="Комментарий" required></textarea>
 
     <!-- CAPTCHA -->
-    <div v-if="captcha.image_url">
+    <div v-if="captcha.image_url" class="captcha-block">
       <img :src="apiUrl + captcha.image_url" alt="captcha" />
+      <button type="button" @click="getCaptcha">Обновить</button>
       <input v-model="form.captcha_text" placeholder="Введите капчу" required />
     </div>
 
@@ -33,6 +34,12 @@
 import axios from 'axios'
 
 export default {
+  props: {
+    parentId: {
+      type: Number,
+      default: null
+    }
+  },
   data() {
     return {
       apiUrl: 'http://127.0.0.1:8000',
@@ -66,12 +73,15 @@ export default {
           formData.append(key, this.form[key])
         }
       }
+      if (this.parentId) {
+        formData.append('parent', this.parentId)
+      }
 
       try {
         await axios.post(`${this.apiUrl}/api/comments/`, formData)
-        alert('Комментарий отправлен!')
         this.resetForm()
         this.getCaptcha()
+        this.$emit('submitted')
       } catch (error) {
         console.error(error.response?.data)
         alert('Ошибка при отправке')

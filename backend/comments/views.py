@@ -1,4 +1,6 @@
 from django.shortcuts import render
+from channels.layers import get_channel_layer
+from asgiref.sync import async_to_sync
 
 from rest_framework import generics, filters
 from .models import Comment
@@ -16,8 +18,21 @@ class CommentListCreateView(generics.ListCreateAPIView):
     pagination_class = CommentPagination
     
     filter_backends = [filters.OrderingFilter]
-    ordering_fields = ['username', 'email', 'created_at']  # 👈 Разрешённые поля
+    ordering_fields = ['username', 'email', 'created_at']
     ordering = ['-created_at']
+
+    def perform_create(self, serializer):
+        comment = serializer.save()
+
+        # WebSocket пуш
+        channel_layer = get_channel_layer()
+        async_to_sync(channel_layer.group_send)(
+            "comments",
+            {
+                "type": "send_new_comment",
+                "data": CommentSerializer(comment).data
+            }
+        )
 
 
 @api_view(['GET'])

@@ -15,9 +15,9 @@ class Comment(models.Model):
 
 
 class FileAttachment(models.Model):
-    comment = models.ForeignKey(Comment, on_delete=models.CASCADE, related_name='attachments')  # К какому комментарию относится
-    file = models.FileField(upload_to='uploads/')  # Сам файл
-    file_type = models.CharField(max_length=10)  # Тип файла (изображение, текст и т.д.)
+    comment = models.ForeignKey(Comment, on_delete=models.CASCADE, related_name='attachments')
+    file = models.FileField(upload_to='uploads/')
+    file_type = models.CharField(max_length=10)
 
     def __str__(self):
         return f"Attachment for comment {self.comment.id}"

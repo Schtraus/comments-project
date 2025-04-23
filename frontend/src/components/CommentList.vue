@@ -14,24 +14,8 @@
       </select>
     </label>
 
-    <div v-for="comment in comments" :key="comment.id" class="comment">
-      <p><strong>{{ comment.username }}</strong> — {{ formatDate(comment.created_at) }}</p>
-      <p v-html="comment.text"></p>
+    <CommentThread v-for="comment in comments" :key="comment.id" :comment="comment" />
 
-      <div v-if="comment.attachments.length">
-        <p><strong>Файлы:</strong></p>
-        <ul>
-          <li v-for="file in comment.attachments" :key="file.id">
-            <a :href="apiUrl + file.file" target="_blank">{{ file.file_type }}</a>
-          </li>
-        </ul>
-      </div>
-
-      <!-- Рекурсивные ответы -->
-      <div class="replies" v-if="comment.replies.length">
-        <CommentThread v-for="reply in comment.replies" :key="reply.id" :comment="reply" />
-      </div>
-    </div>
 
     <!-- Пагинация -->
     <div class="pagination">
@@ -53,7 +37,8 @@ export default {
       comments: [],
       next: null,
       previous: null,
-      ordering: '-created_at'
+      ordering: '-created_at',
+      socket: null,
     }
   },
   methods: {
@@ -67,24 +52,54 @@ export default {
       this.next = response.data.next
       this.previous = response.data.previous
     },
+    connectWebSocket() {
+      this.socket = new WebSocket('ws://127.0.0.1:8000/ws/comments/')
+
+      this.socket.onmessage = (event) => {
+        const newComment = JSON.parse(event.data)
+        
+        newComment.attachments = newComment.attachments.map(file => {
+          if (file.file_type === 'image') {
+            return {
+              ...file,
+              file: file.file + '?t=' + Date.now()
+            }
+          }
+          return file
+        })
+
+        this.loadComments()
+        // Только если это корневой коммент (не ответ)
+        // if (!newComment.parent) {
+        //   this.comments.unshift(newComment)
+
+        //   // обрезаем до 25, если превышает лимит
+        //   if (this.comments.length > 25) {
+        //     this.comments.pop()
+        //   }
+        // } else {
+        //   // это ответ — просто перезагружаем дерево
+        //   this.loadComments()
+        // }
+      }
+
+      this.socket.onclose = () => {
+        console.warn('WebSocket закрыт. Переподключаемся...')
+        setTimeout(() => this.connectWebSocket(), 1000)
+      }
+    },
+
     formatDate(dateStr) {
       return new Date(dateStr).toLocaleString()
     }
   },
   mounted() {
     this.loadComments()
+    this.connectWebSocket()
   }
 }
 </script>
 
 <style scoped>
-.comment {
-  border-bottom: 1px solid #ccc;
-  padding: 10px 0;
-}
-.replies {
-  padding-left: 20px;
-  border-left: 2px dashed #ddd;
-  margin-top: 10px;
-}
+
 </style>

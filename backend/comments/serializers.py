@@ -22,7 +22,7 @@ class FileAttachmentSerializer(serializers.ModelSerializer):
 
 class RecursiveField(serializers.Serializer):
     def to_representation(self, value):
-        # value — это объект комментария (дочерний)
+        # value — объект комментария (дочерний)
         serializer = self.parent.parent.__class__(value, context=self.context)
         return serializer.data
 
@@ -95,7 +95,7 @@ class CommentSerializer(serializers.ModelSerializer):
         if captcha.response != user_input:
             raise serializers.ValidationError({"captcha": "Неверный текст капчи."})
 
-        captcha.delete()  # удалим, чтобы нельзя было переиспользовать
+        captcha.delete()
 
         return data
 
