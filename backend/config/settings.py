@@ -43,6 +43,8 @@ INSTALLED_APPS = [
     'captcha',
     'corsheaders',
     'channels',
+    'django_extensions',
+    'django_erd',
 ]
 
 MIDDLEWARE = [
